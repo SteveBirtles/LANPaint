@@ -32,6 +32,11 @@ import java.util.*;
 
 public class Main extends Application {
 
+    public static String serverAddress = "localhost";
+
+    public static final int MAX_X = 150;
+    public static final int MAX_Y = 118;
+
     public static class LANPaintServer extends AbstractHandler {
 
         private int[][] serverPixelMap = null;
@@ -152,12 +157,9 @@ public class Main extends Application {
     public static final int WINDOW_WIDTH = 1280;
     public static final int WINDOW_HEIGHT = 1024;
     public static final int PIXEL_SIZE = 8;
-    public static final int MAX_X = 150;
-    public static final int MAX_Y = 118;
     public static int failCount = 0;
 
     public static HashSet<KeyCode> keysPressed = new HashSet<>();
-    public static String serverAddress = "localhost";
     public static boolean fullscreen = true;
 
     public static int[][] clientMap = null;
