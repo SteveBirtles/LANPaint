@@ -37,21 +37,6 @@ public class Main extends Application {
         private int[][] serverPixelMap = null;
         private long[][] serverTimeMap = null;
 
-        public class RandomPixelGenerator extends TimerTask {
-
-            Random rnd = new Random(System.currentTimeMillis());
-
-            public void run() {
-                long t = System.currentTimeMillis() >> 8;
-                int x = rnd.nextInt(MAX_X);
-                int y = rnd.nextInt(MAX_Y);
-                int c = rnd.nextInt(16);
-                serverPixelMap[x][y] = c;
-                serverTimeMap[x][y] = t;
-                System.out.println("RANDOM!");
-            }
-        }
-
         public LANPaintServer() {
             serverPixelMap = new int[MAX_X][MAX_Y];
             serverTimeMap = new long[MAX_X][MAX_Y];
@@ -62,20 +47,20 @@ public class Main extends Application {
                 }
             }
 
-            Timer timer = new Timer();
-            timer.scheduleAtFixedRate(new RandomPixelGenerator(), 0, 100);
-
         }
 
         private String mapDelta(long time) {
+            int dCount = 0;
             StringBuilder s = new StringBuilder();
             for (int x = 0; x < MAX_X; x++) {
                 for (int y = 0; y < MAX_Y; y++) {
                     if (serverTimeMap[x][y] > time) {
                         s.append("x" + x + "y" + y + "c" + serverPixelMap[x][y]);
+                        dCount++;
                     }
                 }
             }
+            //System.out.println("Found " + dCount + " differences at time " + time);
             return s.toString();
         }
 
@@ -116,11 +101,13 @@ public class Main extends Application {
 
             }
 
+            baseRequest.setHandled(true);
+
         }
 
     }
 
-    public static void updateMap(String pixels, int[][] map, long[][] timeMap) {
+    public static long updateMap(String pixels, int[][] map, long[][] timeMap) {
 
         long time = System.currentTimeMillis() >> 8;
 
@@ -144,6 +131,9 @@ public class Main extends Application {
                 }
             }
         }
+
+        return time;
+
     }
 
     public class Pixel {
@@ -336,7 +326,7 @@ public class Main extends Application {
                     input.append(br.readLine());
                 }
 
-                updateMap(input.toString(), map, null);
+                lastTime = updateMap(input.toString(), map, null);
 
             }
         }
