@@ -3,11 +3,13 @@ import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -20,7 +22,6 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +33,10 @@ import java.util.*;
 
 public class Main extends Application {
 
-    public static String serverAddress = "localhost";
+    public static boolean server = false;
+    public static boolean fullscreen = false;
+
+    public static String serverAddress = server ? "localhost" : "192.168.1.2";
 
     public static final int MAX_X = 150;
     public static final int MAX_Y = 118;
@@ -74,6 +78,8 @@ public class Main extends Application {
 
             String[] ip = request.getRemoteAddr().split("\\.");
 
+            long serverTime = System.currentTimeMillis() >> 8;
+
             long time = -1;
             String pixels = null;
 
@@ -99,10 +105,10 @@ public class Main extends Application {
                 }
 
                 if (pixels != null) {
-                    updateMap(pixels, serverPixelMap, serverTimeMap);
+                    updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
                 }
 
-                response.getWriter().println(mapDelta(time));
+                response.getWriter().println(serverTime + ":" + mapDelta(time));
 
             }
 
@@ -112,9 +118,7 @@ public class Main extends Application {
 
     }
 
-    public static long updateMap(String pixels, int[][] map, long[][] timeMap) {
-
-        long time = System.currentTimeMillis() >> 8;
+    public static void updateMap(String pixels, int[][] map, long[][] timeMap, long time) {
 
         for (String chunk : pixels.toString().split("x")) {
             if (!chunk.contains("y") || !chunk.contains("c")) continue;
@@ -137,8 +141,6 @@ public class Main extends Application {
             }
         }
 
-        return time;
-
     }
 
     public class Pixel {
@@ -160,11 +162,10 @@ public class Main extends Application {
     public static int failCount = 0;
 
     public static HashSet<KeyCode> keysPressed = new HashSet<>();
-    public static boolean fullscreen = true;
 
     public static int[][] clientMap = null;
     public static Color colour[] = new Color[16];
-    public static int selectedColour = 0;
+    public static int selectedColour = 15;
 
     public static long lastTime = 0;
 
@@ -201,7 +202,7 @@ public class Main extends Application {
         Pane rootPane = new Pane();
         Scene scene = new Scene(rootPane);
 
-        stage.setTitle("LANPaint");
+        stage.setTitle("LANPaint" + (server ? " [SERVER]" : ""));
         stage.setResizable(false);
         stage.setFullScreen(fullscreen);
         stage.setScene(scene);
@@ -221,6 +222,22 @@ public class Main extends Application {
         rootPane.getChildren().add(canvas);
 
         GraphicsContext gc = canvas.getGraphicsContext2D();
+
+        rootPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+
+                int x = (int) (event.getSceneX() - 40) / PIXEL_SIZE;
+                int y = (int) (event.getSceneY() - 40) / PIXEL_SIZE;
+                if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
+                    if (clientMap[x][y] != selectedColour) {
+                        clientMap[x][y] = 1;
+                        newPixels.add(new Pixel(x, y, selectedColour));
+                    }
+                }
+
+            }
+        });
 
         new AnimationTimer() {
             @Override
@@ -247,19 +264,6 @@ public class Main extends Application {
                     if (k == KeyCode.H) selectedColour = 13;
                     if (k == KeyCode.J) selectedColour = 14;
                     if (k == KeyCode.K) selectedColour = 15;
-
-                    if (k == KeyCode.SPACE) {
-                        Point point = MouseInfo.getPointerInfo().getLocation();
-                        int x = (int) (point.getX() - 40) / PIXEL_SIZE;
-                        int y = (int) (point.getY() - 40) / PIXEL_SIZE;
-                        if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
-                            if (clientMap[x][y] != selectedColour) {
-                                clientMap[x][y] = selectedColour;
-                                newPixels.add(new Pixel(x, y, selectedColour));
-                            }
-                        }
-                    }
-
 
                 }
 
@@ -328,7 +332,15 @@ public class Main extends Application {
                     input.append(br.readLine());
                 }
 
-                lastTime = updateMap(input.toString(), map, null);
+                if (input.toString().contains(":")) {
+                    String[] splitInput = input.toString().split(":");
+
+                    if (splitInput.length == 2) {
+                        long serverTime = Long.parseLong(splitInput[0]);
+                        String deltaData = splitInput[1];
+                        updateMap(deltaData, map, null, serverTime);
+                    }
+                }
 
             }
         }
@@ -342,13 +354,17 @@ public class Main extends Application {
 
     public static void main(String[] args) throws Exception {
 
-        Server server = new Server(8081);
-        server.setHandler(new LANPaintServer());
-        server.start();
+        Server server = null;
+
+        if (Main.server) {
+            server = new Server(8081);
+            server.setHandler(new LANPaintServer());
+            server.start();
+        }
 
         launch(args);
 
-        server.stop();
+        if (server != null) server.stop();
         System.exit(0);
     }
 
