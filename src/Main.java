@@ -3,13 +3,11 @@ import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -29,11 +27,12 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public class Main extends Application {
 
-    public static boolean server = false;
+    public static boolean server = true;
     public static boolean fullscreen = false;
 
     public static String serverAddress = server ? "localhost" : "192.168.1.2";
@@ -59,24 +58,19 @@ public class Main extends Application {
         }
 
         private String mapDelta(long time) {
-            int dCount = 0;
             StringBuilder s = new StringBuilder();
             for (int x = 0; x < MAX_X; x++) {
                 for (int y = 0; y < MAX_Y; y++) {
                     if (serverTimeMap[x][y] > time) {
                         s.append("x" + x + "y" + y + "c" + serverPixelMap[x][y]);
-                        dCount++;
                     }
                 }
             }
-            //System.out.println("Found " + dCount + " differences at time " + time);
             return s.toString();
         }
 
         public void handle(String target, Request baseRequest, HttpServletRequest request,
                            HttpServletResponse response) throws IOException, ServletException {
-
-            String[] ip = request.getRemoteAddr().split("\\.");
 
             long serverTime = System.currentTimeMillis() >> 8;
 
@@ -223,20 +217,17 @@ public class Main extends Application {
 
         GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        rootPane.setOnMouseClicked(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
+        rootPane.setOnMouseClicked(event -> {
 
-                int x = (int) (event.getSceneX() - 40) / PIXEL_SIZE;
-                int y = (int) (event.getSceneY() - 40) / PIXEL_SIZE;
-                if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
-                    if (clientMap[x][y] != selectedColour) {
-                        clientMap[x][y] = 1;
-                        newPixels.add(new Pixel(x, y, selectedColour));
-                    }
+            int x = (int) (event.getSceneX() - 40) / PIXEL_SIZE;
+            int y = (int) (event.getSceneY() - 40) / PIXEL_SIZE;
+            if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
+                if (clientMap[x][y] != selectedColour) {
+                    clientMap[x][y] = 1;
+                    newPixels.add(new Pixel(x, y, selectedColour));
                 }
-
             }
+
         });
 
         new AnimationTimer() {
