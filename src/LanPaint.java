@@ -36,7 +36,7 @@ public class LanPaint extends Application {
     public static boolean server = true;
     public static boolean fullscreen = true;
 
-    public static String serverAddress = server ? "localhost" : "192.168.1.1";
+    public static String serverAddress = server ? "localhost" : "192.168.1.2";
 
     public static final int MAX_X = 150;
     public static final int MAX_Y = 118;
@@ -250,7 +250,7 @@ public class LanPaint extends Application {
                     if (k == KeyCode.DIGIT2) { selectedRed = 5; selectedGreen = 2; selectedBlue = 0; }
                     if (k == KeyCode.DIGIT3) { selectedRed = 5; selectedGreen = 4; selectedBlue = 0; }
                     if (k == KeyCode.DIGIT4) { selectedRed = 0; selectedGreen = 5; selectedBlue = 0; }
-                    if (k == KeyCode.DIGIT5) { selectedRed = 0; selectedGreen = 5; selectedBlue = 5; }
+                    if (k == KeyCode.DIGIT5) { selectedRed = 0; selectedGreen = 3; selectedBlue = 3; }
                     if (k == KeyCode.DIGIT6) { selectedRed = 0; selectedGreen = 0; selectedBlue = 5; }
                     if (k == KeyCode.DIGIT7) { selectedRed = 2; selectedGreen = 0; selectedBlue = 5; }
                     if (k == KeyCode.DIGIT8) { selectedRed = 4; selectedGreen = 0; selectedBlue = 5; }
