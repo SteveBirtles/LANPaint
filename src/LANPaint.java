@@ -77,7 +77,7 @@ public class LANPaint extends Application {
 
             long serverTime = System.currentTimeMillis() >> 8;
 
-            long time = -1;
+            long time = 0;
             String pixels = null;
 
             response.setContentType("text/html; charset=utf-8");
