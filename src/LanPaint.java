@@ -8,6 +8,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -33,9 +34,9 @@ import java.util.HashSet;
 public class LanPaint extends Application {
 
     public static boolean server = true;
-    public static boolean fullscreen = false;
+    public static boolean fullscreen = true;
 
-    public static String serverAddress = server ? "localhost" : "192.168.1.2";
+    public static String serverAddress = server ? "localhost" : "192.168.1.1";
 
     public static final int MAX_X = 150;
     public static final int MAX_Y = 118;
@@ -159,8 +160,11 @@ public class LanPaint extends Application {
 
     public static int[][] clientMap = null;
     public static int[][] lastClientMap = null;
-    public static Color colour[] = new Color[16];
-    public static int selectedColour = 3;
+    public static Color colour[] = new Color[216];
+    public static int selectedRed = 5;
+    public static int selectedGreen = 0;
+    public static int selectedBlue = 0;
+    public static int selectedColour = 0;
     public static int lastSelectedColour = 0;
 
     public static long lastTime = 0;
@@ -168,25 +172,13 @@ public class LanPaint extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        colour[0] = Color.BLACK;
-        colour[1] = Color.DARKGRAY;
-        colour[2] = Color.LIGHTGRAY;
-        colour[3] = Color.WHITE;
-
-        colour[4] = Color.BROWN;
-        colour[5] = Color.ORANGE;
-        colour[6] = Color.YELLOW;
-        colour[7] = Color.LIMEGREEN;
-
-        colour[8] = Color.DARKGREEN;
-        colour[9] = Color.CYAN;
-        colour[10] = Color.LIGHTBLUE;
-        colour[11] = Color.BLUE;
-
-        colour[12] = Color.PURPLE;
-        colour[13] = Color.MAGENTA;
-        colour[14] = Color.RED;
-        colour[15] = Color.PINK;
+        for (int r = 0; r < 6; r++) {
+            for (int g = 0; g < 6; g++) {
+                for (int b = 0; b < 6; b++) {
+                    colour[r + 6*g + 36*b] = Color.rgb(r*51, g*51, b*51);
+                }
+            }
+        }
 
         clientMap = new int[MAX_X][MAX_Y];
         lastClientMap = new int[MAX_X][MAX_Y];
@@ -230,9 +222,17 @@ public class LanPaint extends Application {
             int x = (int) (event.getSceneX() - 40) / PIXEL_SIZE;
             int y = (int) (event.getSceneY() - 40) / PIXEL_SIZE;
             if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
-                if (clientMap[x][y] != selectedColour) {
-                    clientMap[x][y] = 1;
-                    newPixels.add(new Pixel(x, y, selectedColour));
+                if (event.getButton() == MouseButton.PRIMARY) {
+                    if (clientMap[x][y] != selectedColour) {
+                        clientMap[x][y] = 215;
+                        newPixels.add(new Pixel(x, y, selectedColour));
+                    }
+                }
+                else if (event.getButton() == MouseButton.SECONDARY) {
+                    int picked = clientMap[x][y];
+                    selectedRed = picked % 6;
+                    selectedGreen = Math.floorDiv(picked - selectedRed, 6) % 6;
+                    selectedBlue = Math.floorDiv(picked - selectedRed - selectedGreen * 6, 36);
                 }
             }
 
@@ -246,25 +246,41 @@ public class LanPaint extends Application {
 
                     if (k == KeyCode.ESCAPE) stage.close();
 
-                    if (k == KeyCode.Q) selectedColour = 0;
-                    if (k == KeyCode.W) selectedColour = 1;
-                    if (k == KeyCode.E) selectedColour = 2;
-                    if (k == KeyCode.R) selectedColour = 3;
-                    if (k == KeyCode.T) selectedColour = 4;
-                    if (k == KeyCode.Y) selectedColour = 5;
-                    if (k == KeyCode.U) selectedColour = 6;
-                    if (k == KeyCode.I) selectedColour = 7;
+                    if (k == KeyCode.DIGIT1) { selectedRed = 5; selectedGreen = 0; selectedBlue = 0; }
+                    if (k == KeyCode.DIGIT2) { selectedRed = 5; selectedGreen = 2; selectedBlue = 0; }
+                    if (k == KeyCode.DIGIT3) { selectedRed = 5; selectedGreen = 4; selectedBlue = 0; }
+                    if (k == KeyCode.DIGIT4) { selectedRed = 0; selectedGreen = 5; selectedBlue = 0; }
+                    if (k == KeyCode.DIGIT5) { selectedRed = 0; selectedGreen = 5; selectedBlue = 5; }
+                    if (k == KeyCode.DIGIT6) { selectedRed = 0; selectedGreen = 0; selectedBlue = 5; }
+                    if (k == KeyCode.DIGIT7) { selectedRed = 2; selectedGreen = 0; selectedBlue = 5; }
+                    if (k == KeyCode.DIGIT8) { selectedRed = 4; selectedGreen = 0; selectedBlue = 5; }
+                    if (k == KeyCode.DIGIT9) { selectedRed = 5; selectedGreen = 5; selectedBlue = 5; }
+                    if (k == KeyCode.DIGIT0) { selectedRed = 0; selectedGreen = 0; selectedBlue = 0; }
 
-                    if (k == KeyCode.A) selectedColour = 8;
-                    if (k == KeyCode.S) selectedColour = 9;
-                    if (k == KeyCode.D) selectedColour = 10;
-                    if (k == KeyCode.F) selectedColour = 11;
-                    if (k == KeyCode.G) selectedColour = 12;
-                    if (k == KeyCode.H) selectedColour = 13;
-                    if (k == KeyCode.J) selectedColour = 14;
-                    if (k == KeyCode.K) selectedColour = 15;
+                    if (k == KeyCode.Q) selectedRed = 0;
+                    if (k == KeyCode.W) selectedRed = 1;
+                    if (k == KeyCode.E) selectedRed = 2;
+                    if (k == KeyCode.R) selectedRed = 3;
+                    if (k == KeyCode.T) selectedRed = 4;
+                    if (k == KeyCode.Y) selectedRed = 5;
+
+                    if (k == KeyCode.A) selectedGreen = 0;
+                    if (k == KeyCode.S) selectedGreen = 1;
+                    if (k == KeyCode.D) selectedGreen = 2;
+                    if (k == KeyCode.F) selectedGreen = 3;
+                    if (k == KeyCode.G) selectedGreen = 4;
+                    if (k == KeyCode.H) selectedGreen = 5;
+
+                    if (k == KeyCode.Z) selectedBlue = 0;
+                    if (k == KeyCode.X) selectedBlue = 1;
+                    if (k == KeyCode.C) selectedBlue = 2;
+                    if (k == KeyCode.V) selectedBlue = 3;
+                    if (k == KeyCode.B) selectedBlue = 4;
+                    if (k == KeyCode.N) selectedBlue = 5;
 
                 }
+
+                selectedColour = selectedRed + selectedGreen*6 + selectedBlue*36;
 
                 if (lastSelectedColour != selectedColour) {
                     gc.setFill(colour[selectedColour]);
@@ -281,7 +297,7 @@ public class LanPaint extends Application {
 
                             int value = clientMap[x][y];
 
-                            if (value < 0 || value > 15) continue;
+                            if (value < 0 || value > 215) continue;
                             if (value == lastClientMap[x][y]) continue;
 
                             gc.setFill(colour[value]);
