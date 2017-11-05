@@ -104,7 +104,7 @@ public class LANPaint extends Application {
                 if (pixels != null) {
                     String timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy"));
                     String ip = request.getRemoteAddr();
-                    System.out.println("[" + timeStamp + "] Updated received from " + ip);
+                    System.out.println("[" + timeStamp + "] Updated received from " + ip + " (" + pixels + ")");
                     updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
                 }
 
