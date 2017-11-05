@@ -34,8 +34,9 @@ import java.util.HashSet;
 public class LanPaint extends Application {
 
     public static boolean server = true;
-    public static boolean fullscreen = true;
+    public static boolean client = false;
 
+    public static boolean fullscreen = true;
     public static String serverAddress = server ? "localhost" : "192.168.1.2";
 
     public static final int MAX_X = 150;
@@ -80,7 +81,7 @@ public class LanPaint extends Application {
 
             response.setContentType("text/html; charset=utf-8");
             response.setStatus(HttpServletResponse.SC_OK);
-            if (request.getRequestURI().equals("/favicon.ico")) return; // SKIP FAVICON REQUESTS;
+            if (request.getRequestURI().equals("/favicon.ico")) return;
 
             String method = request.getMethod().toUpperCase();
 
@@ -379,18 +380,17 @@ public class LanPaint extends Application {
 
     public static void main(String[] args) throws Exception {
 
-        Server server = null;
-
         if (LanPaint.server) {
-            server = new Server(8081);
+            Server server = new Server(8081);
             server.setHandler(new LANPaintServer());
             server.start();
+            System.out.println("Server online!");
         }
 
-        launch(args);
-
-        if (server != null) server.stop();
-        System.exit(0);
+        if (LanPaint.client) {
+            launch(args);
+            System.exit(0);
+        }
     }
 
 }
