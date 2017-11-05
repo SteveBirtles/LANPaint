@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Random;
 
-public class LanPaint extends Application {
+public class LANPaint extends Application {
 
     public static boolean server = false;
     public static boolean client = true;
@@ -412,14 +412,14 @@ public class LanPaint extends Application {
             System.exit(-1);
         }
 
-        if (LanPaint.server) {
+        if (LANPaint.server) {
             Server server = new Server(8081);
             server.setHandler(new LANPaintServer());
             server.start();
             System.out.println("Server online!");
         }
 
-        if (LanPaint.client) {
+        if (LANPaint.client) {
             launch(args);
             System.exit(0);
         }
