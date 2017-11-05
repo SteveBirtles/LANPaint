@@ -33,11 +33,10 @@ import java.util.HashSet;
 
 public class LanPaint extends Application {
 
-    public static boolean server = true;
-    public static boolean client = false;
-
-    public static boolean fullscreen = true;
-    public static String serverAddress = server ? "localhost" : "192.168.1.2";
+    public static boolean server = false;
+    public static boolean client = true;
+    public static boolean fullscreen = false;
+    public static String serverAddress = null;
 
     public static final int MAX_X = 150;
     public static final int MAX_Y = 118;
@@ -379,6 +378,27 @@ public class LanPaint extends Application {
     }
 
     public static void main(String[] args) throws Exception {
+
+        for (String arg: args) {
+            switch (arg.toLowerCase()) {
+                case "dedicated":
+                    client = false;
+                case "server":
+                    serverAddress = "localhost";
+                    server = true;
+                    break;
+                case "fullscreen":
+                    fullscreen = true;
+                    break;
+                default:
+                    serverAddress = arg;
+            }
+        }
+
+        if (serverAddress == null) {
+            System.out.println("No server specified");
+            System.exit(-1);
+        }
 
         if (LanPaint.server) {
             Server server = new Server(8081);
