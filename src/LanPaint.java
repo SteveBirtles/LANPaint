@@ -30,7 +30,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-public class Main extends Application {
+public class LanPaint extends Application {
 
     public static boolean server = true;
     public static boolean fullscreen = false;
@@ -158,8 +158,10 @@ public class Main extends Application {
     public static HashSet<KeyCode> keysPressed = new HashSet<>();
 
     public static int[][] clientMap = null;
+    public static int[][] lastClientMap = null;
     public static Color colour[] = new Color[16];
-    public static int selectedColour = 15;
+    public static int selectedColour = 3;
+    public static int lastSelectedColour = 0;
 
     public static long lastTime = 0;
 
@@ -187,9 +189,11 @@ public class Main extends Application {
         colour[15] = Color.PINK;
 
         clientMap = new int[MAX_X][MAX_Y];
+        lastClientMap = new int[MAX_X][MAX_Y];
         for (int x = 0; x < MAX_X; x++) {
             for (int y = 0; y < MAX_Y; y++) {
                 clientMap[x][y] = 0;
+                lastClientMap[x][y] = 0;
             }
         }
 
@@ -216,6 +220,10 @@ public class Main extends Application {
         rootPane.getChildren().add(canvas);
 
         GraphicsContext gc = canvas.getGraphicsContext2D();
+        gc.setFill(Color.BLACK);
+        gc.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        gc.setStroke(Color.WHITE);
+        gc.strokeRect(39, 39, MAX_X*PIXEL_SIZE+2, MAX_Y*PIXEL_SIZE+2);
 
         rootPane.setOnMouseClicked(event -> {
 
@@ -258,18 +266,28 @@ public class Main extends Application {
 
                 }
 
-                gc.setFill(colour[selectedColour]);
-                gc.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+                if (lastSelectedColour != selectedColour) {
+                    gc.setFill(colour[selectedColour]);
+                    gc.fillRect(0, 0, WINDOW_WIDTH, 20);
+                    gc.fillRect(0, WINDOW_HEIGHT - 20, WINDOW_WIDTH, 20);
+                    gc.fillRect(0, 0, 20, WINDOW_HEIGHT);
+                    gc.fillRect(WINDOW_WIDTH - 20, 0, 20, WINDOW_HEIGHT);
+                    lastSelectedColour = selectedColour;
+                }
 
                 if (clientMap != null) {
                     for (int x = 0; x < MAX_X; x++) {
                         for (int y = 0; y < MAX_Y; y++) {
 
                             int value = clientMap[x][y];
+
                             if (value < 0 || value > 15) continue;
+                            if (value == lastClientMap[x][y]) continue;
 
                             gc.setFill(colour[value]);
                             gc.fillRect(40 + x*PIXEL_SIZE, 40 + y*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+
+                            lastClientMap[x][y] = value;
 
                         }
                     }
@@ -347,7 +365,7 @@ public class Main extends Application {
 
         Server server = null;
 
-        if (Main.server) {
+        if (LanPaint.server) {
             server = new Server(8081);
             server.setHandler(new LANPaintServer());
             server.start();
