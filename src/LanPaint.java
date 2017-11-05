@@ -28,8 +28,11 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public class LanPaint extends Application {
 
@@ -55,7 +58,6 @@ public class LanPaint extends Application {
                     serverTimeMap[x][y] = 0;
                 }
             }
-
         }
 
         private String mapDelta(long time) {
@@ -100,6 +102,9 @@ public class LanPaint extends Application {
                 }
 
                 if (pixels != null) {
+                    String timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy"));
+                    String ip = request.getRemoteAddr();
+                    System.out.println("[" + timeStamp + "] Updated received from " + ip);
                     updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
                 }
 
@@ -277,6 +282,13 @@ public class LanPaint extends Application {
                     if (k == KeyCode.V) selectedBlue = 3;
                     if (k == KeyCode.B) selectedBlue = 4;
                     if (k == KeyCode.N) selectedBlue = 5;
+
+                    if (k == KeyCode.P && serverAddress.equals("localhost")) {
+                        Random rnd = new Random(System.currentTimeMillis());
+                        for (int i = 0; i < 10; i++) {
+                            newPixels.add(new Pixel(rnd.nextInt(MAX_X), rnd.nextInt(MAX_Y), rnd.nextInt(216)));
+                        }
+                    }
 
                 }
 
