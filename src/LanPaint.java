@@ -355,9 +355,9 @@ public class LanPaint extends Application {
             try {
                 responseCode = con.getResponseCode();
             } catch (ConnectException ce) {
-                System.out.println("Unable to connect to server...");
                 failCount++;
-                if (failCount > 10) System.exit(-10);
+                System.out.println("Unable to connect to server... [" + failCount + "/10]");
+                if (failCount >= 10) System.exit(-10);
             }
 
             if (responseCode == 200) {
