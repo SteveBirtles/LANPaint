@@ -1,5 +1,5 @@
 #!/bin/bash
 cd src
-sudo javac -cp .:../jetty-all.jar *.java
-sudo java -cp .:../jetty-all.jar LANPaint $1 $2 $3
+javac -cp .:../jetty-all.jar *.java
+sudo java -cp .:../jetty-all.jar:/usr/lib/jvm/jdk-8-oracle-arm32-vfp-hflt/jre/lib/ext/jfxrt.jar LANPaint $1 $2 $3
 cd ..
