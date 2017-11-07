@@ -202,7 +202,7 @@ public class LANPaint extends Application {
         stage.setFullScreen(fullscreen);
         stage.setScene(scene);
         stage.setWidth(WINDOW_WIDTH);
-        stage.setHeight(WINDOW_HEIGHT);
+        stage.setHeight(WINDOW_HEIGHT + (fullscreen ? 0 : 28));
         stage.setOnCloseRequest((WindowEvent we) -> stage.close());
         stage.show();
 
