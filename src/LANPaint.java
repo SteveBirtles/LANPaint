@@ -86,31 +86,31 @@ public class LANPaint extends Application {
 
             String method = request.getMethod().toUpperCase();
 
-            if (request.getQueryString() != null) {
+            String queryString = request.getQueryString();
+            if (queryString == null) queryString = "";
 
-                for (String q : request.getQueryString().split("&")) {
-                    if (q.contains("=")) {
 
-                        String variable = q.split("=")[0];
-                        String value = q.split("=")[1];
+            for (String q : queryString.split("&")) {
+                if (q.contains("=")) {
 
-                        if (method.equals("GET")) {
-                            if (variable.equals("time")) time = Long.parseLong(value);
-                            if (variable.equals("pixels")) pixels = value;
-                        }
+                    String variable = q.split("=")[0];
+                    String value = q.split("=")[1];
+
+                    if (method.equals("GET")) {
+                        if (variable.equals("time")) time = Long.parseLong(value);
+                        if (variable.equals("pixels")) pixels = value;
                     }
                 }
-
-                if (pixels != null) {
-                    String timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy"));
-                    String ip = request.getRemoteAddr();
-                    System.out.println("[" + timeStamp + "] Updated received from " + ip + " (" + pixels + ")");
-                    updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
-                }
-
-                response.getWriter().println(serverTime + ":" + mapDelta(time));
-
             }
+
+            if (pixels != null) {
+                String timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd-MM-yyyy"));
+                String ip = request.getRemoteAddr();
+                System.out.println("[" + timeStamp + "] Updated received from " + ip + " (" + pixels + ")");
+                updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
+            }
+
+            response.getWriter().println("time=" + serverTime + "<br/>pixels=" + mapDelta(time));
 
             baseRequest.setHandled(true);
 
@@ -369,11 +369,11 @@ public class LANPaint extends Application {
                     input.append(br.readLine());
                 }
 
-                if (input.toString().contains(":")) {
-                    String[] splitInput = input.toString().split(":");
+                if (input.toString().contains("<br/>pixels=")) {
+                    String[] splitInput = input.toString().split("<br/>pixels=");
 
                     if (splitInput.length == 2) {
-                        long serverTime = Long.parseLong(splitInput[0]);
+                        long serverTime = Long.parseLong(splitInput[0].replace("time=", ""));
                         String deltaData = splitInput[1];
                         updateMap(deltaData, map, null, serverTime);
                     }
