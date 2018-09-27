@@ -32,17 +32,22 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Random;
 
 public class LANPaint extends Application {
 
-    public static boolean server = false;
-    public static boolean client = true;
-    public static boolean fullscreen = false;
-    public static String serverAddress = null;
+    public static final boolean FULLSCREEN = false;
 
-    public static final int MAX_X = 150;
-    public static final int MAX_Y = 118;
+    public static boolean SERVER = true;
+    public static int SCREEN = 1; // DON'T CHANGE THIS
+    public static String ADDRESS = "localhost";
+
+    public static int WINDOW_WIDTH = 1920;
+    public static int WINDOW_HEIGHT = 1080;
+
+    public static int PIXEL_SIZE = 3;
+
+    public static final int MAX_X = 640;
+    public static final int MAX_Y = 360;
 
     public static class LANPaintServer extends AbstractHandler {
 
@@ -156,9 +161,6 @@ public class LANPaint extends Application {
 
     public static ArrayList<Pixel> newPixels = new ArrayList<>();
 
-    public static final int WINDOW_WIDTH = 1280;
-    public static final int WINDOW_HEIGHT = 1024;
-    public static final int PIXEL_SIZE = 8;
     public static int failCount = 0;
 
     public static HashSet<KeyCode> keysPressed = new HashSet<>();
@@ -197,12 +199,12 @@ public class LANPaint extends Application {
         Pane rootPane = new Pane();
         Scene scene = new Scene(rootPane);
 
-        stage.setTitle("LANPaint" + (server ? " [SERVER]" : ""));
+        stage.setTitle("LANPaint" + (SERVER ? " [Server]" : ""));
         stage.setResizable(false);
-        stage.setFullScreen(fullscreen);
+        stage.setFullScreen(FULLSCREEN);
         stage.setScene(scene);
         stage.setWidth(WINDOW_WIDTH);
-        stage.setHeight(WINDOW_HEIGHT + (fullscreen ? 0 : 28));
+        stage.setHeight(WINDOW_HEIGHT + (FULLSCREEN ? 0 : 28));
         stage.setOnCloseRequest((WindowEvent we) -> stage.close());
         stage.show();
 
@@ -220,12 +222,44 @@ public class LANPaint extends Application {
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         gc.setStroke(Color.WHITE);
-        gc.strokeRect(39, 39, MAX_X*PIXEL_SIZE+2, MAX_Y*PIXEL_SIZE+2);
+        if (!SERVER) {
+            gc.strokeRect(127, 151, WINDOW_WIDTH-254, WINDOW_HEIGHT-302);
+        }
 
         rootPane.setOnMouseClicked(event -> {
 
-            int x = (int) (event.getSceneX() - 40) / PIXEL_SIZE;
-            int y = (int) (event.getSceneY() - 40) / PIXEL_SIZE;
+            int x;
+            int y;
+
+            if (SERVER) {
+                x = (int) event.getSceneX() / PIXEL_SIZE;
+                y = (int) event.getSceneY() / PIXEL_SIZE;
+            } else {
+                int screenX = (SCREEN-1) % 5;
+                int screenY = (SCREEN-1) / 5;
+
+                int xx = (int) (event.getSceneX()-128) / PIXEL_SIZE;
+                int yy = (int) (event.getSceneY()-152) / PIXEL_SIZE;
+
+                if (xx < 0 || xx > 127) {
+                    x = -1;
+                } else {
+                    x = xx + screenX*128;
+                }
+
+                if (yy < 0 || yy > 89) {
+                    y = -1;
+                } else {
+                    y = yy + screenY*90;
+                }
+
+
+
+
+
+            }
+
+
             if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
                 if (event.getButton() == MouseButton.PRIMARY) {
                     if (clientMap[x][y] != selectedColour) {
@@ -283,18 +317,11 @@ public class LANPaint extends Application {
                     if (k == KeyCode.B) selectedBlue = 4;
                     if (k == KeyCode.N) selectedBlue = 5;
 
-                    if (k == KeyCode.P && serverAddress.equals("localhost")) {
-                        Random rnd = new Random(System.currentTimeMillis());
-                        for (int i = 0; i < 10; i++) {
-                            newPixels.add(new Pixel(rnd.nextInt(MAX_X), rnd.nextInt(MAX_Y), rnd.nextInt(216)));
-                        }
-                    }
-
                 }
 
                 selectedColour = selectedRed + selectedGreen*6 + selectedBlue*36;
 
-                if (lastSelectedColour != selectedColour) {
+                if (!SERVER && lastSelectedColour != selectedColour) {
                     gc.setFill(colour[selectedColour]);
                     gc.fillRect(0, 0, WINDOW_WIDTH, 20);
                     gc.fillRect(0, WINDOW_HEIGHT - 20, WINDOW_WIDTH, 20);
@@ -303,19 +330,45 @@ public class LANPaint extends Application {
                     lastSelectedColour = selectedColour;
                 }
 
-                if (clientMap != null) {
-                    for (int x = 0; x < MAX_X; x++) {
-                        for (int y = 0; y < MAX_Y; y++) {
+                int startX = 0;
+                int startY = 0;
+                int endX = MAX_X;
+                int endY = MAX_Y;
 
-                            int value = clientMap[x][y];
+                int screenX = (SCREEN-1) % 5;
+                int screenY = (SCREEN-1) / 5;
+
+                if (!SERVER) {
+                    startX = -16;
+                    startY = -19;
+                    endX = 128+16;
+                    endY = 90+19;
+                }
+
+                if (clientMap != null) {
+                    for (int x = startX; x < endX; x++) {
+                        for (int y = startY; y < endY; y++) {
+
+                            int xx = x + screenX*128;
+                            int yy = y + screenY*90;
+
+                            if (xx < 0 || yy < 0 || xx >= MAX_X || yy >= MAX_Y) { continue; }
+
+                            int value = clientMap[xx][yy];
 
                             if (value < 0 || value > 215) continue;
-                            if (value == lastClientMap[x][y]) continue;
+                            if (value == lastClientMap[xx][yy]) continue;
 
                             gc.setFill(colour[value]);
-                            gc.fillRect(40 + x*PIXEL_SIZE, 40 + y*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
 
-                            lastClientMap[x][y] = value;
+                            if (SERVER) {
+                                gc.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+                            } else {
+                                gc.fillRect((x - screenX*128) * PIXEL_SIZE + 128, (y - screenY*90) * PIXEL_SIZE + 152 , PIXEL_SIZE, PIXEL_SIZE);
+                            }
+
+
+                            lastClientMap[xx][yy] = value;
 
                         }
                     }
@@ -337,7 +390,7 @@ public class LANPaint extends Application {
             s.append("x" + p.x + "y" + p.y + "c" + p.c);
         }
         newPixels.clear();
-        clientMap = getUpdate(serverAddress, clientMap, s.toString());
+        clientMap = getUpdate(ADDRESS, clientMap, s.toString());
     }
 
     public static int[][] getUpdate(String serverAddress, int[][] map, String changedPixels) {
@@ -356,7 +409,7 @@ public class LANPaint extends Application {
                 responseCode = con.getResponseCode();
             } catch (ConnectException ce) {
                 failCount++;
-                System.out.println("Unable to connect to server... [" + failCount + "/10]");
+                System.out.println("Unable to connect to Server... [" + failCount + "/10]");
                 if (failCount >= 10) System.exit(-10);
             }
 
@@ -393,36 +446,26 @@ public class LANPaint extends Application {
 
         for (String arg: args) {
             switch (arg.toLowerCase()) {
-                case "dedicated":
-                    client = false;
-                case "server":
-                    serverAddress = "localhost";
-                    server = true;
-                    break;
-                case "fullscreen":
-                    fullscreen = true;
-                    break;
                 default:
-                    serverAddress = arg;
+                    SCREEN = 2;
+                    SERVER = false;
+                    WINDOW_WIDTH = 1280;
+                    WINDOW_HEIGHT = 1024;
+                    PIXEL_SIZE = 8;
+                    ADDRESS = arg;
             }
         }
 
-        if (serverAddress == null) {
-            System.out.println("No server specified");
-            System.exit(-1);
-        }
-
-        if (LANPaint.server) {
+        if (SERVER) {
             Server server = new Server(8081);
             server.setHandler(new LANPaintServer());
             server.start();
             System.out.println("Server online!");
         }
 
-        if (LANPaint.client) {
-            launch(args);
-            System.exit(0);
-        }
+        launch(args);
+        System.exit(0);
+
     }
 
 }
