@@ -83,8 +83,6 @@ public class LANPaint extends Application {
         public void handle(String target, Request baseRequest, HttpServletRequest request,
                            HttpServletResponse response) throws IOException, ServletException {
 
-            changeMade = true;
-
             long serverTime = System.currentTimeMillis() >> 8;
 
             long time = 0;
@@ -118,6 +116,7 @@ public class LANPaint extends Application {
                 String ip = request.getRemoteAddr();
                 System.out.println("[" + timeStamp + "] Updated received from " + ip + " (" + pixels + ")");
                 updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
+                changeMade = true;
             }
 
             response.getWriter().println("time=" + serverTime + "<br/>pixels=" + mapDelta(time));
@@ -296,7 +295,9 @@ public class LANPaint extends Application {
                 if (event.getButton() == MouseButton.PRIMARY) {
                     if (clientMap[x][y] != selectedColour) {
                         clientMap[x][y] = 215;
-                        newPixels.add(new Pixel(x, y, selectedColour));
+                        if (!SERVER) {
+                            newPixels.add(new Pixel(x, y, selectedColour));
+                        }
                     }
                 }
                 else if (event.getButton() == MouseButton.SECONDARY) {
