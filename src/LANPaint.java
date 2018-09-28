@@ -21,19 +21,16 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Random;
+import java.util.*;
 
 public class LANPaint extends Application {
 
@@ -51,7 +48,7 @@ public class LANPaint extends Application {
     public static final int MAX_X = 640;
     public static final int MAX_Y = 360;
 
-    public static int z = 0;
+    public static int RELOADER = -1;
 
     public static class LANPaintServer extends AbstractHandler {
 
@@ -172,6 +169,7 @@ public class LANPaint extends Application {
 
     public static int[][] clientMap = null;
     public static int[][] lastClientMap = null;
+    public static int[][] mapBackup = null;
     public static Color colour[] = new Color[216];
     public static int selectedRed = 5;
     public static int selectedGreen = 0;
@@ -180,6 +178,37 @@ public class LANPaint extends Application {
     public static int lastSelectedColour = 0;
 
     public static long lastTime = 0;
+
+    private void backup(String filename) {
+        try {
+            FileOutputStream file = new FileOutputStream(filename);
+            for (int i = 0; i < MAX_X; i++) {
+                for (int j = 0; j < MAX_Y; j++) {
+                    file.write(clientMap[i][j]);
+                }
+            }
+            file.close();
+            System.out.println("Backup made: " + filename);
+        } catch (IOException e) {
+            System.out.println("Backup error - " + e.toString());
+        }
+    }
+
+    private void restore(String filename) {
+        try {
+            FileInputStream file = new FileInputStream(filename);
+            for (int i = 0; i < MAX_X; i++) {
+                for (int j = 0; j < MAX_Y; j++) {
+                    mapBackup[i][j] = file.read();
+                }
+            }
+            file.close();
+            System.out.println("Restoration started: " + filename);
+        } catch (IOException e) {
+            System.out.println("Restore error - " + e.toString());
+        }
+        RELOADER = 0;
+    }
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -194,10 +223,12 @@ public class LANPaint extends Application {
 
         clientMap = new int[MAX_X][MAX_Y];
         lastClientMap = new int[MAX_X][MAX_Y];
+        mapBackup = new int[MAX_X][MAX_Y];
         for (int x = 0; x < MAX_X; x++) {
             for (int y = 0; y < MAX_Y; y++) {
                 clientMap[x][y] = 0;
                 lastClientMap[x][y] = 0;
+                mapBackup[x][y] = 0;
             }
         }
 
@@ -275,13 +306,31 @@ public class LANPaint extends Application {
 
         });
 
+        Timer timer = new Timer();
+
+        timer.schedule( new TimerTask() {
+            public void run() {
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+                Date date = new Date();
+                String filename = "snapshots/" + dateFormat.format(date) + ".dat";
+                backup(filename);
+            }
+        }, 60*1000, 60*1000);
+
         new AnimationTimer() {
             @Override
             public void handle(long now) {
 
+                if (RELOADER == -1) {
+                    restore("save.dat");
+                }
+
                 for (KeyCode k : keysPressed) {
 
-                    if (k == KeyCode.ESCAPE) stage.close();
+                    if (k == KeyCode.ESCAPE) {
+                        backup("save.dat");
+                        stage.close();
+                    }
 
                     if (k == KeyCode.DIGIT1) { selectedRed = 5; selectedGreen = 0; selectedBlue = 0; }
                     if (k == KeyCode.DIGIT2) { selectedRed = 5; selectedGreen = 2; selectedBlue = 0; }
@@ -315,18 +364,26 @@ public class LANPaint extends Application {
                     if (k == KeyCode.B) selectedBlue = 4;
                     if (k == KeyCode.N) selectedBlue = 5;
 
-                    if (k == KeyCode.L && SERVER) {
+                }
 
-                        Random rnd = new Random(System.currentTimeMillis());
-                        for (int i = 0; i < 20; i++) {
-                            z++;
-                            if (z >= MAX_X * MAX_Y) { z = 0; }
-                            int x = z % MAX_X;
-                            int y = z / MAX_X;
-                            newPixels.add(new Pixel(x, y, rnd.nextInt(216)));
+                if (SERVER && RELOADER >= 0 && RELOADER < MAX_X * MAX_Y) {
+
+                    Random rnd = new Random(System.currentTimeMillis());
+                    outer:
+                    for (int i = 0; i < 32; i++) {
+                        while (true) {
+                            RELOADER++;
+                            if (RELOADER >= MAX_X * MAX_Y) {
+                                break outer;
+                            }
+                            int x = RELOADER % MAX_X;
+                            int y = RELOADER / MAX_X;
+                            if (mapBackup[x][y] != clientMap[x][y]) {
+                                newPixels.add(new Pixel(x, y, mapBackup[x][y]));
+                                break;
+                            }
                         }
                     }
-
                 }
 
                 selectedColour = selectedRed + selectedGreen*6 + selectedBlue*36;
@@ -396,6 +453,7 @@ public class LANPaint extends Application {
     }
 
     private static void getUpdate() {
+
         StringBuilder s = new StringBuilder();
         for (Pixel p : newPixels) {
             s.append("x" + p.x + "y" + p.y + "c" + p.c);
