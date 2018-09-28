@@ -37,6 +37,7 @@ public class LANPaint extends Application {
     public static final boolean FULLSCREEN = true;
 
     public static boolean SERVER = true;
+    public static boolean TERMINATE = false;
     public static int SCREEN = 1; // DON'T CHANGE THIS
     public static String ADDRESS = "localhost";
 
@@ -328,127 +329,175 @@ public class LANPaint extends Application {
             @Override
             public void handle(long now) {
 
-                if (SERVER && RELOADER == -1) {
-                    restore("save.dat");
-                }
+                if (!TERMINATE) {
 
-                for (KeyCode k : keysPressed) {
-
-                    if (k == KeyCode.ESCAPE) {
-                        if (SERVER) backup("save.dat");
-                        stage.close();
+                    if (SERVER && RELOADER == -1) {
+                        restore("save.dat");
                     }
 
-                    if (k == KeyCode.DIGIT1) { selectedRed = 5; selectedGreen = 0; selectedBlue = 0; }
-                    if (k == KeyCode.DIGIT2) { selectedRed = 5; selectedGreen = 2; selectedBlue = 0; }
-                    if (k == KeyCode.DIGIT3) { selectedRed = 5; selectedGreen = 4; selectedBlue = 0; }
-                    if (k == KeyCode.DIGIT4) { selectedRed = 0; selectedGreen = 5; selectedBlue = 0; }
-                    if (k == KeyCode.DIGIT5) { selectedRed = 0; selectedGreen = 3; selectedBlue = 3; }
-                    if (k == KeyCode.DIGIT6) { selectedRed = 0; selectedGreen = 0; selectedBlue = 5; }
-                    if (k == KeyCode.DIGIT7) { selectedRed = 2; selectedGreen = 0; selectedBlue = 5; }
-                    if (k == KeyCode.DIGIT8) { selectedRed = 4; selectedGreen = 0; selectedBlue = 5; }
-                    if (k == KeyCode.DIGIT9) { selectedRed = 5; selectedGreen = 5; selectedBlue = 5; }
-                    if (k == KeyCode.DIGIT0) { selectedRed = 0; selectedGreen = 0; selectedBlue = 0; }
+                    for (KeyCode k : keysPressed) {
 
-                    if (k == KeyCode.Q) selectedRed = 0;
-                    if (k == KeyCode.W) selectedRed = 1;
-                    if (k == KeyCode.E) selectedRed = 2;
-                    if (k == KeyCode.R) selectedRed = 3;
-                    if (k == KeyCode.T) selectedRed = 4;
-                    if (k == KeyCode.Y) selectedRed = 5;
-
-                    if (k == KeyCode.A) selectedGreen = 0;
-                    if (k == KeyCode.S) selectedGreen = 1;
-                    if (k == KeyCode.D) selectedGreen = 2;
-                    if (k == KeyCode.F) selectedGreen = 3;
-                    if (k == KeyCode.G) selectedGreen = 4;
-                    if (k == KeyCode.H) selectedGreen = 5;
-
-                    if (k == KeyCode.Z) selectedBlue = 0;
-                    if (k == KeyCode.X) selectedBlue = 1;
-                    if (k == KeyCode.C) selectedBlue = 2;
-                    if (k == KeyCode.V) selectedBlue = 3;
-                    if (k == KeyCode.B) selectedBlue = 4;
-                    if (k == KeyCode.N) selectedBlue = 5;
-
-                }
-
-                if (SERVER && RELOADER >= 0 && RELOADER < MAX_X * MAX_Y) {
-
-                    Random rnd = new Random(System.currentTimeMillis());
-                    outer:
-                    for (int i = 0; i < 32; i++) {
-                        while (true) {
-                            RELOADER++;
-                            if (RELOADER >= MAX_X * MAX_Y) {
-                                break outer;
-                            }
-                            int x = RELOADER % MAX_X;
-                            int y = RELOADER / MAX_X;
-                            if (mapBackup[x][y] != clientMap[x][y]) {
-                                newPixels.add(new Pixel(x, y, mapBackup[x][y]));
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                selectedColour = selectedRed + selectedGreen*6 + selectedBlue*36;
-
-                if (!SERVER) {
-                    gc.strokeRect(127, 151, WINDOW_WIDTH-254, WINDOW_HEIGHT-302);
-                    gc.setFill(colour[selectedColour]);
-                    gc.fillRect(0, 0, WINDOW_WIDTH, 20);
-                    gc.fillRect(0, WINDOW_HEIGHT - 20, WINDOW_WIDTH, 20);
-                    gc.fillRect(0, 0, 20, WINDOW_HEIGHT);
-                    gc.fillRect(WINDOW_WIDTH - 20, 0, 20, WINDOW_HEIGHT);
-                    lastSelectedColour = selectedColour;
-                }
-
-                int startX = 0;
-                int startY = 0;
-                int endX = MAX_X;
-                int endY = MAX_Y;
-
-                int screenX = (SCREEN-1) % 5;
-                int screenY = (SCREEN-1) / 5;
-
-                if (!SERVER) {
-                    startX = -16;
-                    startY = -19;
-                    endX = 128+16;
-                    endY = 90+19;
-                }
-
-                if (clientMap != null) {
-                    for (int x = startX; x < endX; x++) {
-                        for (int y = startY; y < endY; y++) {
-
-                            int xx = x + screenX*128;
-                            int yy = y + screenY*90;
-
-                            if (xx < 0 || yy < 0 || xx >= MAX_X || yy >= MAX_Y) { continue; }
-
-                            int value = clientMap[xx][yy];
-
-                            if (value < 0 || value > 215) continue;
-                            if (value == lastClientMap[xx][yy]) continue;
-
-                            gc.setFill(colour[value]);
-
+                        if (k == KeyCode.ESCAPE) {
                             if (SERVER) {
-                                gc.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
-                            } else {
-                               gc.fillRect(x * PIXEL_SIZE + 128, y * PIXEL_SIZE + 152 , PIXEL_SIZE, PIXEL_SIZE);
+                                backup("save.dat");
+                                TERMINATE = true;
                             }
+                            stage.close();
+                        }
 
+                        if (k == KeyCode.DIGIT1) {
+                            selectedRed = 5;
+                            selectedGreen = 0;
+                            selectedBlue = 0;
+                        }
+                        if (k == KeyCode.DIGIT2) {
+                            selectedRed = 5;
+                            selectedGreen = 2;
+                            selectedBlue = 0;
+                        }
+                        if (k == KeyCode.DIGIT3) {
+                            selectedRed = 5;
+                            selectedGreen = 4;
+                            selectedBlue = 0;
+                        }
+                        if (k == KeyCode.DIGIT4) {
+                            selectedRed = 0;
+                            selectedGreen = 5;
+                            selectedBlue = 0;
+                        }
+                        if (k == KeyCode.DIGIT5) {
+                            selectedRed = 0;
+                            selectedGreen = 3;
+                            selectedBlue = 3;
+                        }
+                        if (k == KeyCode.DIGIT6) {
+                            selectedRed = 0;
+                            selectedGreen = 0;
+                            selectedBlue = 5;
+                        }
+                        if (k == KeyCode.DIGIT7) {
+                            selectedRed = 2;
+                            selectedGreen = 0;
+                            selectedBlue = 5;
+                        }
+                        if (k == KeyCode.DIGIT8) {
+                            selectedRed = 4;
+                            selectedGreen = 0;
+                            selectedBlue = 5;
+                        }
+                        if (k == KeyCode.DIGIT9) {
+                            selectedRed = 5;
+                            selectedGreen = 5;
+                            selectedBlue = 5;
+                        }
+                        if (k == KeyCode.DIGIT0) {
+                            selectedRed = 0;
+                            selectedGreen = 0;
+                            selectedBlue = 0;
+                        }
 
-                            lastClientMap[xx][yy] = value;
+                        if (k == KeyCode.Q) selectedRed = 0;
+                        if (k == KeyCode.W) selectedRed = 1;
+                        if (k == KeyCode.E) selectedRed = 2;
+                        if (k == KeyCode.R) selectedRed = 3;
+                        if (k == KeyCode.T) selectedRed = 4;
+                        if (k == KeyCode.Y) selectedRed = 5;
 
+                        if (k == KeyCode.A) selectedGreen = 0;
+                        if (k == KeyCode.S) selectedGreen = 1;
+                        if (k == KeyCode.D) selectedGreen = 2;
+                        if (k == KeyCode.F) selectedGreen = 3;
+                        if (k == KeyCode.G) selectedGreen = 4;
+                        if (k == KeyCode.H) selectedGreen = 5;
+
+                        if (k == KeyCode.Z) selectedBlue = 0;
+                        if (k == KeyCode.X) selectedBlue = 1;
+                        if (k == KeyCode.C) selectedBlue = 2;
+                        if (k == KeyCode.V) selectedBlue = 3;
+                        if (k == KeyCode.B) selectedBlue = 4;
+                        if (k == KeyCode.N) selectedBlue = 5;
+
+                    }
+
+                    if (SERVER && RELOADER >= 0 && RELOADER < MAX_X * MAX_Y) {
+
+                        Random rnd = new Random(System.currentTimeMillis());
+                        outer:
+                        for (int i = 0; i < 32; i++) {
+                            while (true) {
+                                RELOADER++;
+                                if (RELOADER >= MAX_X * MAX_Y) {
+                                    break outer;
+                                }
+                                int x = RELOADER % MAX_X;
+                                int y = RELOADER / MAX_X;
+                                if (mapBackup[x][y] != clientMap[x][y]) {
+                                    newPixels.add(new Pixel(x, y, mapBackup[x][y]));
+                                    break;
+                                }
+                            }
                         }
                     }
-                }
 
+                    selectedColour = selectedRed + selectedGreen * 6 + selectedBlue * 36;
+
+                    if (!SERVER) {
+                        gc.strokeRect(127, 151, WINDOW_WIDTH - 254, WINDOW_HEIGHT - 302);
+                        gc.setFill(colour[selectedColour]);
+                        gc.fillRect(0, 0, WINDOW_WIDTH, 20);
+                        gc.fillRect(0, WINDOW_HEIGHT - 20, WINDOW_WIDTH, 20);
+                        gc.fillRect(0, 0, 20, WINDOW_HEIGHT);
+                        gc.fillRect(WINDOW_WIDTH - 20, 0, 20, WINDOW_HEIGHT);
+                        lastSelectedColour = selectedColour;
+                    }
+
+                    int startX = 0;
+                    int startY = 0;
+                    int endX = MAX_X;
+                    int endY = MAX_Y;
+
+                    int screenX = (SCREEN - 1) % 5;
+                    int screenY = (SCREEN - 1) / 5;
+
+                    if (!SERVER) {
+                        startX = -16;
+                        startY = -19;
+                        endX = 128 + 16;
+                        endY = 90 + 19;
+                    }
+
+                    if (clientMap != null) {
+                        for (int x = startX; x < endX; x++) {
+                            for (int y = startY; y < endY; y++) {
+
+                                int xx = x + screenX * 128;
+                                int yy = y + screenY * 90;
+
+                                if (xx < 0 || yy < 0 || xx >= MAX_X || yy >= MAX_Y) {
+                                    continue;
+                                }
+
+                                int value = clientMap[xx][yy];
+
+                                if (value < 0 || value > 215) continue;
+                                if (value == lastClientMap[xx][yy]) continue;
+
+                                gc.setFill(colour[value]);
+
+                                if (SERVER) {
+                                    gc.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
+                                } else {
+                                    gc.fillRect(x * PIXEL_SIZE + 128, y * PIXEL_SIZE + 152, PIXEL_SIZE, PIXEL_SIZE);
+                                }
+
+
+                                lastClientMap[xx][yy] = value;
+
+                            }
+                        }
+                    }
+
+                }
             }
         }.start();
 
