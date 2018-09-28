@@ -291,51 +291,51 @@ public class LANPaint extends Application {
             }
 
 
-            if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
-                if (event.getButton() == MouseButton.PRIMARY) {
-                    if (clientMap[x][y] != selectedColour) {
-                        clientMap[x][y] = 215;
-                        if (!SERVER) {
+            if (!SERVER) {
+                if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
+                    if (event.getButton() == MouseButton.PRIMARY) {
+                        if (clientMap[x][y] != selectedColour) {
+                            clientMap[x][y] = 215;
                             newPixels.add(new Pixel(x, y, selectedColour));
                         }
+                    } else if (event.getButton() == MouseButton.SECONDARY) {
+                        int picked = clientMap[x][y];
+                        selectedRed = picked % 6;
+                        selectedGreen = Math.floorDiv(picked - selectedRed, 6) % 6;
+                        selectedBlue = Math.floorDiv(picked - selectedRed - selectedGreen * 6, 36);
                     }
-                }
-                else if (event.getButton() == MouseButton.SECONDARY) {
-                    int picked = clientMap[x][y];
-                    selectedRed = picked % 6;
-                    selectedGreen = Math.floorDiv(picked - selectedRed, 6) % 6;
-                    selectedBlue = Math.floorDiv(picked - selectedRed - selectedGreen * 6, 36);
                 }
             }
 
         });
 
-        Timer timer = new Timer();
-
-        timer.schedule( new TimerTask() {
-            public void run() {
-                if (changeMade) {
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                    Date date = new Date();
-                    String filename = "snapshots/" + dateFormat.format(date) + ".dat";
-                    backup(filename);
-                    changeMade = false;
+        if (SERVER) {
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                public void run() {
+                    if (changeMade) {
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+                        Date date = new Date();
+                        String filename = "snapshots/" + dateFormat.format(date) + ".dat";
+                        backup(filename);
+                        changeMade = false;
+                    }
                 }
-            }
-        }, 60*1000, 60*1000);
+            }, 60 * 1000, 60 * 1000);
+        }
 
         new AnimationTimer() {
             @Override
             public void handle(long now) {
 
-                if (RELOADER == -1) {
+                if (SERVER && RELOADER == -1) {
                     restore("save.dat");
                 }
 
                 for (KeyCode k : keysPressed) {
 
                     if (k == KeyCode.ESCAPE) {
-                        backup("save.dat");
+                        if (SERVER) backup("save.dat");
                         stage.close();
                     }
 
