@@ -54,12 +54,12 @@ public class LANPaint extends Application {
 
     public static class LANPaintServer extends AbstractHandler {
 
-        private int[][] serverPixelMap = null;
+        private byte[][] serverPixelMap = null;
         private long[][] serverTimeMap = null;
 
         public LANPaintServer() {
 
-            serverPixelMap = new int[MAX_X][MAX_Y];
+            serverPixelMap = new byte[MAX_X][MAX_Y];
             serverTimeMap = new long[MAX_X][MAX_Y];
             for (int x = 0; x < MAX_X; x++) {
                 for (int y = 0; y < MAX_Y; y++) {
@@ -128,7 +128,7 @@ public class LANPaint extends Application {
 
     }
 
-    public static void updateMap(String pixels, int[][] map, long[][] timeMap, long time) {
+    public static void updateMap(String pixels, byte[][] map, long[][] timeMap, long time) {
 
         for (String chunk : pixels.toString().split("x")) {
             if (!chunk.contains("y") || !chunk.contains("c")) continue;
@@ -136,7 +136,7 @@ public class LANPaint extends Application {
             String[] cSplit = ySplit[1].split("c");
             int x = Integer.parseInt(ySplit[0]);
             int y = Integer.parseInt(cSplit[0]);
-            int c = Integer.parseInt(cSplit[1]);
+            byte c = (byte) Integer.parseInt(cSplit[1]);
 
             if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
                 if (timeMap == null) {
@@ -170,9 +170,9 @@ public class LANPaint extends Application {
 
     public static HashSet<KeyCode> keysPressed = new HashSet<>();
 
-    public static int[][] clientMap = null;
-    public static int[][] lastClientMap = null;
-    public static int[][] mapBackup = null;
+    public static byte[][] clientMap = null;
+    public static byte[][] lastClientMap = null;
+    public static byte[][] mapBackup = null;
     public static Color colour[] = new Color[216];
     public static int selectedRed = 5;
     public static int selectedGreen = 0;
@@ -199,10 +199,14 @@ public class LANPaint extends Application {
 
     private void restore(String filename) {
         try {
+
+            byte[] buffer = new byte[1];
+
             FileInputStream file = new FileInputStream(filename);
             for (int i = 0; i < MAX_X; i++) {
                 for (int j = 0; j < MAX_Y; j++) {
-                    mapBackup[i][j] = file.read();
+                    file.read(buffer);
+                    mapBackup[i][j] = buffer[0];
                 }
             }
             file.close();
@@ -224,9 +228,9 @@ public class LANPaint extends Application {
             }
         }
 
-        clientMap = new int[MAX_X][MAX_Y];
-        lastClientMap = new int[MAX_X][MAX_Y];
-        mapBackup = new int[MAX_X][MAX_Y];
+        clientMap = new byte[MAX_X][MAX_Y];
+        lastClientMap = new byte[MAX_X][MAX_Y];
+        mapBackup = new byte[MAX_X][MAX_Y];
         for (int x = 0; x < MAX_X; x++) {
             for (int y = 0; y < MAX_Y; y++) {
                 clientMap[x][y] = 0;
@@ -296,11 +300,11 @@ public class LANPaint extends Application {
                 if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
                     if (event.getButton() == MouseButton.PRIMARY) {
                         if (clientMap[x][y] != selectedColour) {
-                            clientMap[x][y] = 215;
+                            clientMap[x][y] = (byte) 215;
                             newPixels.add(new Pixel(x, y, selectedColour));
                         }
                     } else if (event.getButton() == MouseButton.SECONDARY) {
-                        int picked = clientMap[x][y];
+                        byte picked = clientMap[x][y];
                         selectedRed = picked % 6;
                         selectedGreen = Math.floorDiv(picked - selectedRed, 6) % 6;
                         selectedBlue = Math.floorDiv(picked - selectedRed - selectedGreen * 6, 36);
@@ -477,7 +481,7 @@ public class LANPaint extends Application {
                                     continue;
                                 }
 
-                                int value = clientMap[xx][yy];
+                                byte value = clientMap[xx][yy];
 
                                 if (value < 0 || value > 215) continue;
                                 if (value == lastClientMap[xx][yy]) continue;
@@ -518,7 +522,7 @@ public class LANPaint extends Application {
         clientMap = getUpdate(ADDRESS, clientMap, s.toString());
     }
 
-    public static int[][] getUpdate(String serverAddress, int[][] map, String changedPixels) {
+    public static byte[][] getUpdate(String serverAddress, byte[][] map, String changedPixels) {
 
         URL url;
         HttpURLConnection con;
