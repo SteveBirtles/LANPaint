@@ -314,7 +314,7 @@ public class LANPaint extends Application {
 
         });
 
-        if (SERVER) {
+        if (ADDRESS.equals("localhost")) {
             Timer timer = new Timer();
             timer.schedule(new TimerTask() {
                 public void run() {
@@ -335,14 +335,14 @@ public class LANPaint extends Application {
 
                 if (!TERMINATE) {
 
-                    if (SERVER && RELOADER == -1) {
+                    if (ADDRESS.equals("localhost") && RELOADER == -1) {
                         restore("save.dat");
                     }
 
                     for (KeyCode k : keysPressed) {
 
                         if (k == KeyCode.ESCAPE) {
-                            if (SERVER) {
+                            if (ADDRESS.equals("localhost")) {
                                 backup("save.dat");
                                 TERMINATE = true;
                             }
