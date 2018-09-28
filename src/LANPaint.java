@@ -49,6 +49,7 @@ public class LANPaint extends Application {
     public static final int MAX_Y = 360;
 
     public static int RELOADER = -1;
+    public static boolean changeMade = false;
 
     public static class LANPaintServer extends AbstractHandler {
 
@@ -81,6 +82,8 @@ public class LANPaint extends Application {
 
         public void handle(String target, Request baseRequest, HttpServletRequest request,
                            HttpServletResponse response) throws IOException, ServletException {
+
+            changeMade = true;
 
             long serverTime = System.currentTimeMillis() >> 8;
 
@@ -310,10 +313,13 @@ public class LANPaint extends Application {
 
         timer.schedule( new TimerTask() {
             public void run() {
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                Date date = new Date();
-                String filename = "snapshots/" + dateFormat.format(date) + ".dat";
-                backup(filename);
+                if (changeMade) {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+                    Date date = new Date();
+                    String filename = "snapshots/" + dateFormat.format(date) + ".dat";
+                    backup(filename);
+                    changeMade = false;
+                }
             }
         }, 60*1000, 60*1000);
 
