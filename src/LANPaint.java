@@ -35,7 +35,7 @@ import java.util.HashSet;
 
 public class LANPaint extends Application {
 
-    public static final boolean FULLSCREEN = false;
+    public static final boolean FULLSCREEN = true;
 
     public static boolean SERVER = true;
     public static int SCREEN = 1; // DON'T CHANGE THIS
@@ -364,7 +364,7 @@ public class LANPaint extends Application {
                             if (SERVER) {
                                 gc.fillRect(x * PIXEL_SIZE, y * PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE);
                             } else {
-                                gc.fillRect((x - screenX*128) * PIXEL_SIZE + 128, (y - screenY*90) * PIXEL_SIZE + 152 , PIXEL_SIZE, PIXEL_SIZE);
+                               gc.fillRect(x * PIXEL_SIZE + 128, y * PIXEL_SIZE + 152 , PIXEL_SIZE, PIXEL_SIZE);
                             }
 
 
