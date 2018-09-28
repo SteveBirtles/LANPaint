@@ -27,11 +27,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Random;
 
 public class LANPaint extends Application {
 
@@ -49,12 +51,15 @@ public class LANPaint extends Application {
     public static final int MAX_X = 640;
     public static final int MAX_Y = 360;
 
+    public static int z = 0;
+
     public static class LANPaintServer extends AbstractHandler {
 
         private int[][] serverPixelMap = null;
         private long[][] serverTimeMap = null;
 
         public LANPaintServer() {
+
             serverPixelMap = new int[MAX_X][MAX_Y];
             serverTimeMap = new long[MAX_X][MAX_Y];
             for (int x = 0; x < MAX_X; x++) {
@@ -136,14 +141,14 @@ public class LANPaint extends Application {
             if (x >= 0 && y >= 0 && x < MAX_X && y < MAX_Y) {
                 if (timeMap == null) {
                     map[x][y] = c;
-                }
-                else {
+                } else {
                     if (timeMap[x][y] < time) {
                         map[x][y] = c;
                         timeMap[x][y] = time;
                     }
                 }
             }
+
         }
 
     }
@@ -222,9 +227,6 @@ public class LANPaint extends Application {
         gc.setFill(Color.BLACK);
         gc.fillRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
         gc.setStroke(Color.WHITE);
-        if (!SERVER) {
-            gc.strokeRect(127, 151, WINDOW_WIDTH-254, WINDOW_HEIGHT-302);
-        }
 
         rootPane.setOnMouseClicked(event -> {
 
@@ -252,10 +254,6 @@ public class LANPaint extends Application {
                 } else {
                     y = yy + screenY*90;
                 }
-
-
-
-
 
             }
 
@@ -317,11 +315,24 @@ public class LANPaint extends Application {
                     if (k == KeyCode.B) selectedBlue = 4;
                     if (k == KeyCode.N) selectedBlue = 5;
 
+                    if (k == KeyCode.L && SERVER) {
+
+                        Random rnd = new Random(System.currentTimeMillis());
+                        for (int i = 0; i < 20; i++) {
+                            z++;
+                            if (z >= MAX_X * MAX_Y) { z = 0; }
+                            int x = z % MAX_X;
+                            int y = z / MAX_X;
+                            newPixels.add(new Pixel(x, y, rnd.nextInt(216)));
+                        }
+                    }
+
                 }
 
                 selectedColour = selectedRed + selectedGreen*6 + selectedBlue*36;
 
-                if (!SERVER && lastSelectedColour != selectedColour) {
+                if (!SERVER) {
+                    gc.strokeRect(127, 151, WINDOW_WIDTH-254, WINDOW_HEIGHT-302);
                     gc.setFill(colour[selectedColour]);
                     gc.fillRect(0, 0, WINDOW_WIDTH, 20);
                     gc.fillRect(0, WINDOW_HEIGHT - 20, WINDOW_WIDTH, 20);
@@ -450,7 +461,20 @@ public class LANPaint extends Application {
         } else if (args.length == 2) {
             SERVER = false;
             ADDRESS = args[0];
-            SCREEN = Integer.parseInt(args[1]);
+            if (args[1].toLowerCase().equals("auto")) {
+                InetAddress inetAddress = InetAddress.getLocalHost();
+                String hostname = inetAddress.getHostName();
+                String suffix = hostname.substring(hostname.length()-2, hostname.length());
+                SCREEN = Integer.parseInt(suffix);
+                if (SCREEN < 1 || SCREEN > 20) {
+                    System.out.println(hostname + ": Invalid screen assigned, exiting...");
+                    System.exit(2);
+                } else {
+                    System.out.println(hostname + ": Automatically assigned to screen " + SCREEN);
+                }
+            } else {
+                SCREEN = Integer.parseInt(args[1]);
+            }
             WINDOW_WIDTH = 1280;
             WINDOW_HEIGHT = 1024;
             PIXEL_SIZE = 8;
