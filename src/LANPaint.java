@@ -199,7 +199,7 @@ public class LANPaint extends Application {
         Pane rootPane = new Pane();
         Scene scene = new Scene(rootPane);
 
-        stage.setTitle("LANPaint" + (SERVER ? " [Server]" : ""));
+        stage.setTitle("LANPaint");
         stage.setResizable(false);
         stage.setFullScreen(FULLSCREEN);
         stage.setScene(scene);
@@ -399,7 +399,7 @@ public class LANPaint extends Application {
         HttpURLConnection con;
 
         try {
-            url = new URL("http://" + serverAddress + ":8081"
+            url = new URL("http://" + serverAddress + ":8888"
                     + "?time=" + (map == null ? -1 : lastTime)
                     + (changedPixels.length() > 0 ? "&pixels=" + changedPixels: ""));
             con = (HttpURLConnection) url.openConnection();
@@ -444,23 +444,25 @@ public class LANPaint extends Application {
 
     public static void main(String[] args) throws Exception {
 
-        for (String arg: args) {
-            switch (arg.toLowerCase()) {
-                default:
-                    SCREEN = 2;
-                    SERVER = false;
-                    WINDOW_WIDTH = 1280;
-                    WINDOW_HEIGHT = 1024;
-                    PIXEL_SIZE = 8;
-                    ADDRESS = arg;
+        if (args.length == 0 || args.length > 2) {
+            System.out.println("Incorrect command line arguments.");
+            System.exit(1);
+        } else if (args.length == 2) {
+            SERVER = false;
+            ADDRESS = args[0];
+            SCREEN = Integer.parseInt(args[1]);
+            WINDOW_WIDTH = 1280;
+            WINDOW_HEIGHT = 1024;
+            PIXEL_SIZE = 8;
+        } else {
+            if (args[0].toLowerCase().equals("server")) {
+                Server server = new Server(8888);
+                server.setHandler(new LANPaintServer());
+                server.start();
+                System.out.println("Server online!");
+            } else {
+                ADDRESS = args[0];
             }
-        }
-
-        if (SERVER) {
-            Server server = new Server(8081);
-            server.setHandler(new LANPaintServer());
-            server.start();
-            System.out.println("Server online!");
         }
 
         launch(args);
