@@ -6,7 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class Network {
+class Network {
 
     static ArrayList<Pixel> newPixels = new ArrayList<>();
     private static int failCount = 0;
@@ -18,7 +18,7 @@ public class Network {
             s.append("x").append(p.x).append("y").append(p.y).append("c").append(p.c);
         }
         newPixels.clear();
-        Map.clientMap = Network.getUpdate(LANPaint.ADDRESS, Map.clientMap, s.toString());
+        Map.clientMap = Network.getUpdate(PaintClient.ADDRESS, Map.clientMap, s.toString());
     }
 
     private static int[][] getUpdate(String serverAddress, int[][] map, String changedPixels) {

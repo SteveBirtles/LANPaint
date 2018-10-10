@@ -1,4 +1,4 @@
-public class Pixel {
+class Pixel {
     int x;
     int y;
     int c;

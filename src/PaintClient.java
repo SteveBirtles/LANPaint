@@ -14,13 +14,8 @@ import javafx.util.Duration;
 import org.eclipse.jetty.server.Server;
 
 import java.net.InetAddress;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 
-public class LANPaint extends Application {
+public class PaintClient extends Application {
 
     static boolean SERVER = true;
     static boolean TERMINATE = false;
@@ -31,30 +26,17 @@ public class LANPaint extends Application {
     static int WINDOW_HEIGHT = 1080;
 
     static int PIXEL_SIZE = 3;
-    static boolean changeMade = false;
-
-    static Color colour[] = new Color[216];
-    static Stage stage;
 
     @Override
-    public void start(Stage s) throws Exception {
+    public void start(Stage stage) throws Exception {
 
-        stage = s;
-
-        for (int r = 0; r < 6; r++) {
-            for (int g = 0; g < 6; g++) {
-                for (int b = 0; b < 6; b++) {
-                    colour[r + 6*g + 36*b] = Color.rgb(r*51, g*51, b*51);
-                }
-            }
-        }
-
+        Colour.prepareColours();
         Map.resetMap();
 
         Pane rootPane = new Pane();
         Scene scene = new Scene(rootPane);
 
-        stage.setTitle("LANPaint");
+        stage.setTitle("PaintClient");
         stage.setResizable(false);
         stage.setFullScreen(true);
         stage.setScene(scene);
@@ -62,6 +44,7 @@ public class LANPaint extends Application {
         stage.setHeight(WINDOW_HEIGHT);
         stage.setOnCloseRequest((WindowEvent we) -> stage.close());
         stage.show();
+        Input.stage = stage;
 
         scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> Input.keysPressed.add(event.getCode()));
         scene.addEventFilter(KeyEvent.KEY_RELEASED, event -> Input.keysPressed.remove(event.getCode()));
@@ -80,20 +63,7 @@ public class LANPaint extends Application {
 
         Input.prepareMouse(rootPane);
 
-        if (SERVER) {
-            Timer timer = new Timer();
-            timer.schedule(new TimerTask() {
-                public void run() {
-                    if (changeMade) {
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-                        Date date = new Date();
-                        String filename = "snapshots/" + dateFormat.format(date) + ".dat";
-                        File.backup(filename);
-                        changeMade = false;
-                    }
-                }
-            }, 60 * 1000, 60 * 1000);
-        }
+        if (SERVER) PaintServer.startSnapshots();
 
         Frame.startTimer(gc);
 

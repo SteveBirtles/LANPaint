@@ -5,13 +5,19 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class PaintServer extends AbstractHandler {
 
     private int[][] serverPixelMap = null;
     private long[][] serverTimeMap = null;
+    static boolean changeMade = false;
 
     PaintServer() {
 
@@ -73,12 +79,29 @@ public class PaintServer extends AbstractHandler {
             String ip = request.getRemoteAddr();
             System.out.println("[" + timeStamp + "] Updated received from " + ip + " (" + pixels + ")");
             Map.updateMap(pixels, serverPixelMap, serverTimeMap, serverTime);
-            LANPaint.changeMade = true;
+            PaintServer.changeMade = true;
         }
 
         response.getWriter().println("time=" + serverTime + "<br/>pixels=" + mapDelta(time));
 
         baseRequest.setHandled(true);
+
+    }
+
+    static void startSnapshots() {
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            public void run() {
+                if (changeMade) {
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+                    Date date = new Date();
+                    String filename = "snapshots/" + dateFormat.format(date) + ".dat";
+                    File.backup(filename);
+                    changeMade = false;
+                }
+            }
+        }, 60 * 1000, 60 * 1000);
 
     }
 

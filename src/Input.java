@@ -1,10 +1,11 @@
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
+import javafx.stage.Stage;
 
 import java.util.HashSet;
 
-public class Input {
+class Input {
 
     static int selectedRed = 5;
     static int selectedGreen = 0;
@@ -12,6 +13,7 @@ public class Input {
     static int selectedColour = 0;
 
     static HashSet<KeyCode> keysPressed = new HashSet<>();
+    static Stage stage;
 
     static void prepareMouse(Pane rootPane) {
 
@@ -20,15 +22,15 @@ public class Input {
             int x;
             int y;
 
-            if (LANPaint.SERVER) {
-                x = (int) event.getSceneX() / LANPaint.PIXEL_SIZE;
-                y = (int) event.getSceneY() / LANPaint.PIXEL_SIZE;
+            if (PaintClient.SERVER) {
+                x = (int) event.getSceneX() / PaintClient.PIXEL_SIZE;
+                y = (int) event.getSceneY() / PaintClient.PIXEL_SIZE;
             } else {
-                int screenX = (LANPaint.SCREEN-1) % 5;
-                int screenY = (LANPaint.SCREEN-1) / 5;
+                int screenX = (PaintClient.SCREEN-1) % 5;
+                int screenY = (PaintClient.SCREEN-1) / 5;
 
-                int xx = (int) (event.getSceneX()-128) / LANPaint.PIXEL_SIZE;
-                int yy = (int) (event.getSceneY()-152) / LANPaint.PIXEL_SIZE;
+                int xx = (int) (event.getSceneX()-128) / PaintClient.PIXEL_SIZE;
+                int yy = (int) (event.getSceneY()-152) / PaintClient.PIXEL_SIZE;
 
                 if (xx < 0 || xx > 127) {
                     x = -1;
@@ -44,8 +46,7 @@ public class Input {
 
             }
 
-
-            if (!LANPaint.SERVER) {
+            if (!PaintClient.SERVER) {
                 if (x >= 0 && y >= 0 && x < Map.MAX_X && y < Map.MAX_Y) {
                     if (event.getButton() == MouseButton.PRIMARY) {
                         if (Map.clientMap[x][y] != selectedColour) {
@@ -70,11 +71,11 @@ public class Input {
         for (KeyCode k : keysPressed) {
 
             if (k == KeyCode.ESCAPE) {
-                if (LANPaint.SERVER) {
+                if (PaintClient.SERVER) {
                     File.backup("save.dat");
-                    LANPaint.TERMINATE = true;
+                    PaintClient.TERMINATE = true;
                 }
-                LANPaint.stage.close();
+                stage.close();
             }
 
             if (k == KeyCode.DIGIT1) {
